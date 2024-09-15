@@ -34,13 +34,13 @@
 ### Запуск проекта для установки VPN
 
 ```bash
-ansible-playbook -i inventary play.yaml
+ansible-playbook -i inventory play.yaml
 ```
 
 ### Удаление VPN
 
 ```bash
-ansible-playbook -i inventary play.yaml -e wireguard_destroy=true
+ansible-playbook -i inventory play.yaml -e wireguard_destroy=true
 ```
 
 ## Конфигурация

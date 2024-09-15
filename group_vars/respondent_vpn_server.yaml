@@ -22,5 +22,5 @@ wireguard_allowed_ips:
 
 # Endpoint сервера-респондента (ответчика) WireGuard
 # Здесь указывается IP-адрес сервера и порт, на котором он слушает
-# Значение берется из inventary
+# Значение берется из inventory
 wireguard_respondent_endpoint: "{{ hostvars[groups['initiator_vpn_server'][0]].ansible_host }}:{{ wireguard_listen_port }}"
