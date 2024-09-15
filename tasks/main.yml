@@ -1,0 +1,97 @@
+---
+- name: WireGuard | Установка ПО
+  tags: install
+  block:
+    - name: Установка пакетов
+      apt:
+        name:
+          - wireguard
+        state: present
+        update_cache: yes
+
+    - name: Включение форвардинга пакетов
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: "1"
+        sysctl_set: yes
+        state: present
+        reload: yes
+
+    - name: Создание директории для конфигураций WireGuard
+      file:
+        path: /etc/wireguard
+        state: directory
+        mode: "0700"
+
+    - name: Генерация приватного ключа
+      shell: wg genkey > /etc/wireguard/privatekey
+      args:
+        creates: /etc/wireguard/privatekey
+
+    - name: Установка разрешения для приватного ключа
+      file:
+        path: /etc/wireguard/privatekey
+        mode: "0600"
+
+    - name: Генерация публичного ключа
+      shell: wg pubkey < /etc/wireguard/privatekey > /etc/wireguard/publickey
+      args:
+        creates: /etc/wireguard/publickey
+
+    - name: Чтение приватного ключа
+      slurp:
+        src: /etc/wireguard/privatekey
+      register: private_key
+
+    - name: Чтение публичного ключа
+      slurp:
+        src: /etc/wireguard/publickey
+      register: public_key
+
+    - name: Сохранение приватного ключа в переменную
+      set_fact:
+        wg_private_key: "{{ private_key.content | b64decode }}"
+
+    - name: Сохранение публичного ключа в переменную
+      set_fact:
+        wg_public_key: "{{ public_key.content | b64decode }}"
+
+    ### Для отладки раскомментировать
+    # - name: Вывести приватный ключ
+    #   debug:
+    #     msg: "Приватный ключ: {{ wg_private_key }}"
+
+    # - name: Вывести публичный ключ
+    #   debug:
+    #     msg: "Публичный ключ: {{ wg_public_key }}"
+
+  when: not wireguard_destroy | default(false) | bool
+
+- name: WireGuard | Конфигурация сервера
+  tags: configure
+  block:
+    - name: Создание конфигурационного файла WireGuard
+      template:
+        src: wg.conf.j2
+        dest: "/etc/wireguard/{{ wireguard_name_vpn_interface }}.conf"
+        mode: "0600"
+      notify: Restart WireGuard
+  when: not wireguard_destroy | default(false) | bool
+
+- name: WireGuard | Удаленние VPN
+  tags: destroy
+  block:
+    - name: Остановить WireGuard интерфейс
+      command: "wg-quick down {{ wireguard_name_vpn_interface }}"
+      ignore_errors: true
+
+    - name: Удалить WireGuard
+      package:
+        name: wireguard
+        state: absent
+
+    - name: Очистить папку /etc/wireguard
+      file:
+        path: /etc/wireguard
+        state: absent
+  when: wireguard_destroy | default(false) | bool

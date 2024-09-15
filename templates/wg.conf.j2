@@ -1,0 +1,22 @@
+# Manage Ansible
+
+[Interface]
+Address = {{ wireguard_address_interface }}
+{% if wireguard_listen_port is defined %}
+ListenPort = {{ wireguard_listen_port }}
+{% endif %}
+PrivateKey = {{ wg_private_key }}
+
+[Peer]
+{% if 'initiator_vpn_server' in group_names %}
+PublicKey = {{ hostvars[groups['respondent_vpn_server'][0]].wg_public_key }}
+{% elif 'respondent_vpn_server' in group_names %}
+PublicKey = {{ hostvars[groups['initiator_vpn_server'][0]].wg_public_key }}
+{% endif %}
+AllowedIPs = {{ wireguard_allowed_ips | join(', ') }}
+{% if wireguard_respondent_endpoint is defined %}
+Endpoint = {{ wireguard_respondent_endpoint }}
+{% endif %}
+{% if wireguard_persistent_keepalive is defined %}
+PersistentKeepalive = {{ wireguard_persistent_keepalive }}
+{% endif %}

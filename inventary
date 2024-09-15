@@ -1,0 +1,9 @@
+[all:vars]
+ansible_user = admin
+ansible_become = yes
+
+[respondent_vpn_server]
+respondent_vpn1  ansible_host=ip_addresses
+
+[initiator_vpn_server]
+initiator_vpn2  ansible_host=ip_addresses
